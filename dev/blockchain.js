@@ -70,7 +70,7 @@ Blockchain.prototype.proofOfWork = function (
     hash = this.hashBlock(previousBlockHash, currentBlockData, nonce)
   }
 
-  return nonce + " " + hash
+  return nonce
 }
 
 module.exports = Blockchain
