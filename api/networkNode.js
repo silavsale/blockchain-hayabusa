@@ -28,6 +28,7 @@ app.post("/transaction", function (req, res) {
   res.json({ note: `Transaction will be added to block ${blockIndex}.` })
 })
 
+// route to create a new transaction with transaction id
 app.post("/transaction/broadcast", function (req, res) {
   const { amount, sender, recipient } = req.body
   console.log("amount", amount)
@@ -198,6 +199,76 @@ app.post("/register-node-bulk", function (req, res) {
   })
 
   res.json({ note: "Bulk registration successful." })
+})
+
+app.get("/consensus", function (req, res) {
+  const requestPromises = []
+  bitcoin.networkNodes.forEach((networkNodeUrl) => {
+    const requestOptions = {
+      uri: networkNodeUrl + "/blockchain",
+      method: "GET",
+      json: true,
+    }
+    requestPromises.push(rp(requestOptions))
+  })
+
+  Promise.all(requestPromises).then((blockchains) => {
+    const curentChainLength = bitcoin.chain.length
+    let maxChainLength = curentChainLength
+    let newLongestChain = null
+    let newPandingTransactions = null
+    blockchains.forEach((blockchain) => {
+      if (blockchain.chain.length > maxChainLength) {
+        maxChainLength = blockchain.chain.length
+        newLongestChain = blockchain.chain
+        newPandingTransactions = blockchain.pendingTransactions
+      }
+    })
+
+    if (
+      !newLongestChain ||
+      (newLongestChain && !bitcoin.chainIsValid(newLongestChain))
+    ) {
+      res.json({
+        note: "Current chain has not been replaced.",
+        chain: bitcoin.chain,
+      })
+      // meening of else = (newLongestChain && bitcoin.chainIsValid(newLongestChain))
+    } else {
+      bitcoin.chain = newLongestChain
+      bitcoin.pendingTransactions = newPandingTransactions
+      res.json({
+        note: "This chain has been replaced.",
+        chain: bitcoin.chain,
+      })
+    }
+  })
+})
+
+app.get("/block/:blockHash", function (req, res) {
+  const blockHash = req.params.blockHash
+  console.log("blockHash", blockHash)
+  const correctBlock = bitcoin.getBlock(blockHash)
+  console.log("correctBlock", correctBlock)
+
+  res.json({ block: correctBlock })
+})
+
+app.get("/transaction/:transactionId", function (req, res) {
+  const transactionId = req.params.transactionId
+  const transactionData = bitcoin.getTransaction(transactionId)
+  res.json({
+    transaction: transactionData.transaction,
+    block: transactionData.block,
+  })
+})
+
+app.get("/address/:address", function (req, res) {
+  const address = req.params.address
+  const addressData = bitcoin.getAddressData(address)
+  res.json({
+    addressData: addressData,
+  })
 })
 
 app.listen(PORT, function () {
