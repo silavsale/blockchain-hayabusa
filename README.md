@@ -2,5 +2,13 @@
 
 - The technologies used in this project:
 
-1. JavaScript
+### JavaScript
+
+/ Api
+
 1. node js
+1. express
+
+/ Client
+
+1. Next.js
