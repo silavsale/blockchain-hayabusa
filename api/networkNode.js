@@ -271,6 +271,8 @@ app.get("/address/:address", function (req, res) {
   })
 })
 
+app.get('/block-explorer')
+
 app.listen(PORT, function () {
   console.log(`Listening on port ${PORT}...`)
 })
